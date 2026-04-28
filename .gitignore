@@ -1,0 +1,22 @@
+bin/
+obj/
+.env
+*.nupkg
+
+# User/local machine files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Build and test output
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# Logs and OS files
+*.log
+Thumbs.db
+.DS_Store

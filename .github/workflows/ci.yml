@@ -1,0 +1,18 @@
+name: CLI CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - run: dotnet build Insighta.Cli.csproj --configuration Release
+      - run: dotnet pack Insighta.Cli.csproj --configuration Release --no-build

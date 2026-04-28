@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>insighta</ToolCommandName>
+    <PackageId>HngInsightaLabs.Cli</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Insighta Labs</Authors>
+    <Company>Insighta Labs</Company>
+    <Description>Globally installable CLI for Insighta Labs+ profile intelligence.</Description>
+    <PackageTags>insighta;hng;cli;oauth;profiles</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>
