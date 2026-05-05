@@ -27,15 +27,29 @@ dotnet pack -c Release
 dotnet tool install --global --add-source ./bin/Release HngInsightaLabs.Cli
 ```
 
-## Configure
+## Login
 
-Set the backend URL once:
+For a fresh login, the CLI reads the backend URL from `INSIGHTA_BACKEND_URL` in `.env`. It also accepts the backend's `Auth__BackendPublicUrl` value as a fallback.
+
+```bash
+INSIGHTA_BACKEND_URL=http://localhost:8080
+```
+
+After installing, log in directly:
+
+```bash
+insighta login
+```
+
+Credentials are stored at `~/.insighta/credentials.json`.
+
+## Optional Backend Override
+
+You can still store a manual backend override:
 
 ```bash
 insighta config set-backend https://your-backend-url.com
 ```
-
-Credentials are stored at `~/.insighta/credentials.json`.
 
 For local Docker testing:
 

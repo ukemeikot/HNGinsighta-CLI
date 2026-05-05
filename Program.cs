@@ -16,6 +16,7 @@ internal sealed class InsightaCli
 
     public InsightaCli(string[] args)
     {
+        LoadDotEnv();
         _args = args;
         _credentialsPath = Path.Combine(_configDir, "credentials.json");
     }
@@ -69,7 +70,8 @@ internal sealed class InsightaCli
 
     private async Task LoginAsync()
     {
-        var credentials = await LoadAsync() ?? new Credentials { BackendUrl = Environment.GetEnvironmentVariable("INSIGHTA_BACKEND_URL") ?? "http://localhost:8080" };
+        var credentials = await LoadAsync() ?? new Credentials();
+        EnsureBackendUrl(credentials);
         using var client = new HttpClient { BaseAddress = new Uri(credentials.BackendUrl) };
         var start = await ReadJsonAsync<AuthStartResponse>(await client.PostAsync("/api/v1/auth/cli/start", null));
         Console.WriteLine("Open this URL to sign in with GitHub:");
@@ -106,6 +108,7 @@ internal sealed class InsightaCli
         var credentials = await LoadAsync();
         if (credentials is not null && !string.IsNullOrWhiteSpace(credentials.RefreshToken))
         {
+            EnsureBackendUrl(credentials);
             using var client = new HttpClient { BaseAddress = new Uri(credentials.BackendUrl) };
             await client.PostAsync("/api/v1/auth/logout", JsonBody(new { refresh_token = credentials.RefreshToken }));
         }
@@ -214,6 +217,7 @@ internal sealed class InsightaCli
     private async Task<Credentials> GetFreshCredentialsAsync()
     {
         var credentials = await LoadAsync() ?? throw new InvalidOperationException("Run `insighta login` first");
+        EnsureBackendUrl(credentials);
         if (DateTime.UtcNow < credentials.ExpiresAt && !string.IsNullOrWhiteSpace(credentials.AccessToken))
         {
             return credentials;
@@ -227,6 +231,17 @@ internal sealed class InsightaCli
         credentials.User = tokens.User;
         await SaveAsync(credentials);
         return credentials;
+    }
+
+    private static void EnsureBackendUrl(Credentials credentials)
+    {
+        if (string.IsNullOrWhiteSpace(credentials.BackendUrl))
+        {
+            credentials.BackendUrl = GetConfiguredBackendUrl();
+            return;
+        }
+
+        credentials.BackendUrl = credentials.BackendUrl.TrimEnd('/');
     }
 
     private async Task<Credentials?> LoadAsync()
@@ -400,11 +415,61 @@ internal sealed class InsightaCli
         Console.WriteLine("Commands: login, logout, whoami, config set-backend <url>, profiles list|search|get|create|delete|export");
         Console.WriteLine("Examples: insighta profiles create --name \"Harriet Tubman\" | insighta profiles export --format csv --gender male --country NG");
     }
+
+    private static string GetConfiguredBackendUrl()
+    {
+        var backendUrl = Environment.GetEnvironmentVariable("INSIGHTA_BACKEND_URL")
+            ?? Environment.GetEnvironmentVariable("Auth__BackendPublicUrl");
+
+        if (string.IsNullOrWhiteSpace(backendUrl))
+        {
+            throw new InvalidOperationException("Set INSIGHTA_BACKEND_URL in .env or run `insighta config set-backend <url>`.");
+        }
+
+        return backendUrl.TrimEnd('/');
+    }
+
+    private static void LoadDotEnv()
+    {
+        var directory = new DirectoryInfo(Environment.CurrentDirectory);
+        while (directory is not null)
+        {
+            var envPath = Path.Combine(directory.FullName, ".env");
+            if (File.Exists(envPath))
+            {
+                foreach (var rawLine in File.ReadLines(envPath))
+                {
+                    var line = rawLine.Trim();
+                    if (line.Length == 0 || line.StartsWith('#'))
+                    {
+                        continue;
+                    }
+
+                    var separatorIndex = line.IndexOf('=');
+                    if (separatorIndex <= 0)
+                    {
+                        continue;
+                    }
+
+                    var key = line[..separatorIndex].Trim();
+                    var value = line[(separatorIndex + 1)..].Trim().Trim('"');
+                    if (Environment.GetEnvironmentVariable(key) is null)
+                    {
+                        Environment.SetEnvironmentVariable(key, value);
+                    }
+                }
+
+                return;
+            }
+
+            directory = directory.Parent;
+        }
+    }
 }
 
 internal sealed class Credentials
 {
-    [JsonPropertyName("backend_url")] public string BackendUrl { get; set; } = "http://localhost:8080";
+    [JsonPropertyName("backend_url")] public string BackendUrl { get; set; } = "";
     [JsonPropertyName("access_token")] public string? AccessToken { get; set; }
     [JsonPropertyName("refresh_token")] public string? RefreshToken { get; set; }
     [JsonPropertyName("expires_at")] public DateTime ExpiresAt { get; set; }

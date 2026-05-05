@@ -7,7 +7,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>insighta</ToolCommandName>
     <PackageId>HngInsightaLabs.Cli</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Insighta Labs</Authors>
     <Company>Insighta Labs</Company>
     <Description>Globally installable CLI for Insighta Labs+ profile intelligence.</Description>
